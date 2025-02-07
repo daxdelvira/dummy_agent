@@ -88,12 +88,14 @@ class webnav_agent(RoutedAgent):
     async def handle_goal_message(self, message: goal_message, ctx: MessageContext):
         self._chat_history.append("Message from Orchestrator", goal_message)
         model_completion = await self._model_client.create([self._system_message] + self._chat_history)
+        print(model_completion.content)
         self._chat_history.append(AssistantMessage(content=model_completion.content, source=self.id.type))
         await self.publish_message(webnav_tool_message(body=AssistantMessage(content=model_completion.content, source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
 
     @message_handler
     async def handle_state_request_message(self, message:state_request_message, ctx: MessageContext):
         model_completion = await self._model_client.create([state_request_message] + self._chat_history)
+        print(model_completion.content)
         await self.publish_message(webnav_state_message(body=AssistantMessage(content=model_completion.content, source=self.id.type)), topic_id=DefaultTopicID(type="state"))
 
 # Orchestrator agent
