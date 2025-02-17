@@ -143,7 +143,7 @@ class state_tracker_agent(RoutedAgent):
         'check_out_month_clicked': True
         }"""
 
-        self._STATE_REQUEST_MESSAGE = "Please use your previous tool action history and current tool action to anlyze the states relating to the task. If you don't have a chat history yet, use the states you infer from the booking taskMoUti given you haven't taken any action. No matter what, PLEASE return something in the correct format. Please return the state variables in the following format, with the type value replaced with the description replaced with the correct value or NONE if the state is ot applicable yet:" + self._state_variables
+        self._STATE_REQUEST_MESSAGE="Please use your previous tool action history and current tool action to analyze the states relating to the task. Please return nothing besides the state variables in the following format, with the type value replaced with the description replaced with the correct value or NONE if the state is not applicable yet:{\n        'location_bar_clicked': 'value of True or False. True if the location bar has been clicked and false otherwise',\n        'location_type': 'value of True or False. True if the location has been typed into the location bar and false otherwise',\n        'location_value': 'The name you typed into the location bar, otherwise NONE',\n        'pop_up_present': 'value of True or False. True if a popup is on the screen, False otherwise.',\n        'check_in_month_clicked': 'value of True or False. True if the check in month has been clicked, false otherwise.',\n        'check_in_day_clicked': 'value of True or False. True if the check in day has been clicked, false otherwise.',\n        'check_out_month_clicked': 'value of True or False. True if the check out month has been clicked, false otherwise.'\n        'check_out_day_clicked': 'value of True or False. True if the check out day has been clicked, false otherwise.',\n        }\n [Format Ended]. The chat history can be found below.\n" + self._state_variables
 
     @message_handler
     async def handle_webnav_tool_message(self, message:webnav_tool_message, ctx: MessageContext) -> None:
@@ -156,7 +156,7 @@ class state_tracker_agent(RoutedAgent):
     @message_handler
     async def handle_webnav_state_message(self, message:webnav_state_message, ctx:MessageContext) -> None:
         print("State message received")
-        await self.publish_message(initial_goal_message(content=UserMessage(content="Please use the tools at your disposal and your knowledge of your previous actions to complete the goal task: 'Find the cheapest available hotel room for a three night stay from 1st Jan in Jakarta. The room is for 2 adults, just answer the cheapest hotel room and the price.' Please explain your thought process and select one tool function to use.", source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
+        await self.publish_message(initial_goal_message(content=UserMessage(content="Please use the tools at your disposal and your knowledge of your previous actions to simulate completing the goal task. Do NOT use tools besides the ones given to you. The goals task is: 'Find the cheapest available hotel room for a three night stay from 1st Jan in Jakarta. The room is for 2 adults, just answer the cheapest hotel room and the price.' Please explain your thought process and select one tool function to use.", source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
         self._state_history.append(message)
         print(self._state_history)
 
