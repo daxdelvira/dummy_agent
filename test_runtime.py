@@ -102,7 +102,7 @@ class webnav_agent(RoutedAgent):
             arguments = json.loads(tool_call.arguments)
             tool_result = await getattr(self, tool_name).run_json(arguments, ctx.cancellation_token)
         print("Goal message received")
-        self._chat_history.append(webnav_tool_message(content=UserMessage(content=tool_result, source=self.id.type)))
+        self._chat_history.append(UserMessage(content=tool_result, source=self.id.type))
         await self.publish_message(webnav_tool_message(content=UserMessage(content=tool_result, source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
 
 
