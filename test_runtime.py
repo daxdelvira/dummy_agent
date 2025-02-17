@@ -88,11 +88,11 @@ class webnav_agent(RoutedAgent):
 
     @message_handler
     async def handle_goal_message(self, message: initial_goal_message, ctx: MessageContext) -> None:
-        self._chat_history.append(message.content)
+        #self._chat_history.append(message.content)
         print("Message here")
         print(self._chat_history)
         print("Second Message")
-        model_completion = await self._model_client.create(self._system_message + self._chat_history, tools=[self._obtain_website_tool, self._click_tool, self._scroll_tool, self._type_tool],)
+        model_completion = await self._model_client.create(self._system_message + message.content + self._chat_history, tools=[self._obtain_website_tool, self._click_tool, self._scroll_tool, self._type_tool],)
         print(model_completion.content)
         assert isinstance(model_completion.content, list) and all(
             isinstance(item, FunctionCall) for item in model_completion.content
@@ -156,7 +156,7 @@ class state_tracker_agent(RoutedAgent):
     @message_handler
     async def handle_webnav_state_message(self, message:webnav_state_message, ctx:MessageContext) -> None:
         print("State message received")
-        await self.publish_message(initial_goal_message(content=UserMessage(content="Please use the tools at your disposal and your knowledge of your previous actions to simulate completing the goal task. Do NOT use tools besides the ones given to you. The goals task is: 'Find the cheapest available hotel room for a three night stay from 1st Jan in Jakarta. The room is for 2 adults, just answer the cheapest hotel room and the price.' Please explain your thought process and select one tool function to use.", source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
+        await self.publish_message(initial_goal_message(content=UserMessage(content="Please use the tools at your disposal and your knowledge of your previous actions to simulate completing the goal task. Do NOT use tools besides the ones given to you. The goals task is: 'Find the cheapest available hotel room for a three night stay from 1st Jan in Jakarta. The room is for 2 adults, just answer the cheapest hotel room and the price.' Please explain your thought process and select one tool function to use from the ones given to you in this prompt.", source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
         self._state_history.append(message)
         print(self._state_history)
 
