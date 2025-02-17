@@ -92,7 +92,7 @@ class webnav_agent(RoutedAgent):
         print("Message here")
         print(self._chat_history)
         print("Second Message")
-        model_completion = await self._model_client.create(self._system_message + message.content + self._chat_history, tools=[self._obtain_website_tool, self._click_tool, self._scroll_tool, self._type_tool],)
+        model_completion = await self._model_client.create(self._system_message + [message.content] + self._chat_history, tools=[self._obtain_website_tool, self._click_tool, self._scroll_tool, self._type_tool],)
         print(model_completion.content)
         assert isinstance(model_completion.content, list) and all(
             isinstance(item, FunctionCall) for item in model_completion.content
