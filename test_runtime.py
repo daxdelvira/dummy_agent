@@ -109,9 +109,9 @@ class webnav_agent(RoutedAgent):
     @message_handler
     async def handle_state_request_message(self, message:state_request_message, ctx: MessageContext) -> None:
         print("State request message received")
-        model_completion = await self._model_client.create([UserMessage(content="Please use your previous tool action history and current tool action to anlyze the states relating to the task. Please return the state variables in the following format, with the type value replaced with the description replaced with the correct value or NONE if the state is ot applicable yet:{\n        'location_bar_clicked': 'value of True or False. True if the location bar has been clicked and false otherwise',\n        'location_type': 'value of True or False. True if the location has been typed into the location bar and false otherwise',\n        'location_value': 'The name you typed into the location bar, otherwise NONE',\n        'pop_up_present': 'value of True or False. True if a popup is on the screen, False otherwise.',\n        'check_in_month_clicked': 'value of True or False. True if the check in month has been clicked, false otherwise.',\n        'check_in_day_clicked': 'value of True or False. True if the check in day has been clicked, false otherwise.',\n        'check_out_month_clicked': 'value of True or False. True if the check out month has been clicked, false otherwise.'\n        'check_out_day_clicked': 'value of True or False. True if the check out day has been clicked, false otherwise.',\n        }", source='state', type='UserMessage')])
+        model_completion = await self._model_client.create([UserMessage(content="Please use your previous tool action history and current tool action to analyze the states relating to the task. Please return nothing besides the state variables in the following format, with the type value replaced with the description replaced with the correct value or NONE if the state is not applicable yet:{\n        'location_bar_clicked': 'value of True or False. True if the location bar has been clicked and false otherwise',\n        'location_type': 'value of True or False. True if the location has been typed into the location bar and false otherwise',\n        'location_value': 'The name you typed into the location bar, otherwise NONE',\n        'pop_up_present': 'value of True or False. True if a popup is on the screen, False otherwise.',\n        'check_in_month_clicked': 'value of True or False. True if the check in month has been clicked, false otherwise.',\n        'check_in_day_clicked': 'value of True or False. True if the check in day has been clicked, false otherwise.',\n        'check_out_month_clicked': 'value of True or False. True if the check out month has been clicked, false otherwise.'\n        'check_out_day_clicked': 'value of True or False. True if the check out day has been clicked, false otherwise.',\n        }\n [Format Ended]. The chat history can be found below.\n", source='state', type='UserMessage')]+self._chat_history)
         print(model_completion.content)
-        await self.publish_message(webnav_state_message(content=AssistantMessage(content=model_completion.content, source=self.id.type)), topic_id=DefaultTopicID(type="state"))
+        await self.publish_message(webnav_state_message(content=UserMessage(content=model_completion.content, source=self.id.type)), topic_id=DefaultTopicID(type="state"))
 
 # Orchestrator agent
 
@@ -156,7 +156,7 @@ class state_tracker_agent(RoutedAgent):
     @message_handler
     async def handle_webnav_state_message(self, message:webnav_state_message, ctx:MessageContext) -> None:
         self._state_history.append(message)
-        print(_state_history)
+        print(self._state_history)
 
 async def main():
     runtime = SingleThreadedAgentRuntime()
