@@ -155,6 +155,8 @@ class state_tracker_agent(RoutedAgent):
 
     @message_handler
     async def handle_webnav_state_message(self, message:webnav_state_message, ctx:MessageContext) -> None:
+        print("State message received")
+        await self.publish_message(initial_goal_message(content=UserMessage(content="Please use the tools at your disposal and your knowledge of your previous actions to complete the goal task: 'Find the cheapest available hotel room for a three night stay from 1st Jan in Jakarta. The room is for 2 adults, just answer the cheapest hotel room and the price.' Please explain your thought process and select one tool function to use.", source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
         self._state_history.append(message)
         print(self._state_history)
 
