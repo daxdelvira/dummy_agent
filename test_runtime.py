@@ -101,15 +101,26 @@ class webnav_agent(RoutedAgent):
     async def handle_goal_message(self, message: initial_goal_message, ctx: MessageContext) -> None:
         print("Handling Goal Message. . .\n")
         print("Received:\n", message.content, "\n")
-        model_completion = await self._model_client.create(self._system_message + [message.content] + self._chat_history, tools=[self._obtain_website_tool, self._click_tool, self._scroll_tool, self._type_tool],)
-        assert isinstance(model_completion.content, list) and all(
-            isinstance(item, FunctionCall) for item in model_completion.content
-        )
+        needRetry = True
+        while needRetry:
+            try:
+                model_completion = await self._model_client.create(self._system_message + [message.content] + self._chat_history, tools=[self._obtain_website_tool, self._click_tool, self._scroll_tool, self._type_tool],)
+                assert isinstance(model_completion.content, list) and all(
+                    isinstance(item, FunctionCall) for item in model_completion.content
+                    )
+            except AssertionError:
+                print("Assertion error")
+            
+            needRetry = False
+
         for tool_call in model_completion.content:
             print("Executing tool call: \n", tool_call, "\n")
             tool_name = tool_call.name
             arguments = json.loads(tool_call.arguments)
-            tool_result = await getattr(self, tool_name).run_json(arguments, ctx.cancellation_token)
+            try:
+                tool_result = await getattr(self, tool_name).run_json(arguments, ctx.cancellation_token)
+            except AttributeError:
+                tool_result = "Invalid tool name, try again."
             print("Tool result: \n", tool_result, "\n")
         self._chat_history.append(UserMessage(content=tool_result, source=self.id.type))
         await self.publish_message(webnav_tool_message(content=UserMessage(content=tool_result, source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
