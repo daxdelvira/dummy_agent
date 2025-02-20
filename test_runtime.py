@@ -220,7 +220,7 @@ async def main():
     await runtime.publish_message(
         initial_goal_message(
             content=UserMessage(content=selected_task["system_message"],
-            source="Orchestrator Agent",
+            source="orchestrator_agent",
             )
         ),
         TopicId(type="nav", source="user"),
