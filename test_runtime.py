@@ -143,7 +143,21 @@ class state_tracker_agent(RoutedAgent):
         'check_out_month_clicked': True
         }"""
 
-        self._STATE_REQUEST_MESSAGE="Please use your previous tool action history and current tool action to analyze the states relating to the task. Please return nothing besides the state variables in the following format, with the description replaced with the correct value or NONE if the state is not applicable yet:" + self._state_variables
+        self._STATE_REQUEST_MESSAGE="""Analyze the state variables based on your previous tool actions and the current tool action.
+
+- Use your tool action history to infer which state variables have changed.
+- If a state variable has been updated, return its new value.
+- If a state variable is not applicable yet, return 'NONE'.
+
+Return only the state variables in the following JSON format, with each description replaced by its correct value:
+
+{
+    "state_variable_1": "correct_value_or_NONE",
+    "state_variable_2": "correct_value_or_NONE",
+    ...
+}
+
+Do not include any explanations, reasoning, or additional text—only the correctly formatted JSON output.""" + self._state_variables
 
     @message_handler
     async def handle_webnav_tool_message(self, message:webnav_tool_message, ctx: MessageContext) -> None:
@@ -157,6 +171,7 @@ class state_tracker_agent(RoutedAgent):
         print("State message received\n")
         await self.publish_message(initial_goal_message(content=UserMessage(content=selected_task["system_message"], source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
         self._state_history.append(message)
+        
 
 async def main():
     runtime = SingleThreadedAgentRuntime()
