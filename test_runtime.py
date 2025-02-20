@@ -77,18 +77,18 @@ class webnav_agent(RoutedAgent):
     async def _obtain_website(self, web_url: str) -> int:
         #Returns 1 if successful
         print(f"Ran: driver.get({web_url})")
-        return f"Arrived at website {web_url}"
+        return f"Arrived at website {web_url}, successfully, time for the next step"
 
     #Dummy click tool
     async def _click(self, element: str) -> str:
         print(f"selected_element = driver.find_element(By.NAME,\"{element}\")")
         print("selected_element.click()")
-        return f"Clicked on {element}"
+        return f"Clicked on {element} successfully, time for the next step"
 
     #Dummy scroll tool
     async def _scroll(self, distance: int) -> int:
         print(f"ActionChains(driver).scroll_by_amount(0,{distance}).perform()")
-        return f"Scrolled by {distance}"
+        return f"Scrolled by {distance}, successfully found what you were looking for."
 
     #Dummy type tool
     async def _type(self, field_name:str, text:str) -> int:
