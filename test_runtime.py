@@ -240,7 +240,7 @@ async def main():
     runtime.start()
     session_id = str(uuid.uuid4())
     
-    goal_state = json.loads(selected_task["goal_state_variables"], indent=4)
+    goal_state = json.dumps(selected_task["goal_state_variables"], indent=4)
    
     await runtime.publish_message(
         initial_goal_message(
