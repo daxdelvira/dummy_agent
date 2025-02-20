@@ -11,7 +11,15 @@
             "enrollment_started": "Boolean (True/False). True if the enrollment process has started, False otherwise.",
             "name_entered": "Boolean (True/False). True if the name 'Dax' has been entered, False otherwise.",
             "email_entered": "Boolean (True/False). True if the email 'dax@gatech.edu' has been entered, False otherwise.",
-            "enrollment_completed": "Boolean (True/False). True if the enrollment has been successfully completed, False otherwise."
+        },
+        "goal_state_variables": {
+            "search_bar_clicked": true,
+            "search_term_entered": true, 
+            "course_selected": true,  
+            "course_duration_valid": true, 
+            "enrollment_started": true, 
+            "name_entered": true,  
+            "email_entered": true 
         }
     },
     {

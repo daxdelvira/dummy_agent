@@ -240,11 +240,11 @@ async def main():
     runtime.start()
     session_id = str(uuid.uuid4())
     
+    goal_state = json.loads(selected_task["goal_state_variables"], indent=4)
    
-
     await runtime.publish_message(
         initial_goal_message(
-            content=UserMessage(content=selected_task["system_message"],
+            content=UserMessage(content=selected_task["system_message"] + "Remember the eventual goal state we want to reach is represented as follows:" + goal_state,
             source="orchestrator_agent",
             )
         ),
