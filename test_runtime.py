@@ -48,6 +48,17 @@ class webnav_tool_message(BaseModel):
 class webnav_state_message(BaseModel):
     content: UserMessage
 
+
+def add_task_by_id(task_id:str):
+        with open("test_tasks.json", "r") as task_file:
+            tasks = json.load(task_file)
+
+        for task in tasks:
+            if tasks["id"] == task_id:
+                return task
+
+selected_task = add_task_by_id("Coursera--0")
+
 # Webnav agent class definition
 
 class webnav_agent(RoutedAgent):
@@ -109,7 +120,7 @@ class webnav_agent(RoutedAgent):
     @message_handler
     async def handle_state_request_message(self, message:state_request_message, ctx: MessageContext) -> None:
         print("State request message received")
-        model_completion = await self._model_client.create([UserMessage(content="Please use your previous tool action history and current tool action to analyze the states relating to the task. Please return nothing besides the state variables in the following format, with the type value replaced with the description replaced with the correct value or NONE if the state is not applicable yet:{\n        'location_bar_clicked': 'value of True or False. True if the location bar has been clicked and false otherwise',\n        'location_type': 'value of True or False. True if the location has been typed into the location bar and false otherwise',\n        'location_value': 'The name you typed into the location bar, otherwise NONE',\n        'pop_up_present': 'value of True or False. True if a popup is on the screen, False otherwise.',\n        'check_in_month_clicked': 'value of True or False. True if the check in month has been clicked, false otherwise.',\n        'check_in_day_clicked': 'value of True or False. True if the check in day has been clicked, false otherwise.',\n        'check_out_month_clicked': 'value of True or False. True if the check out month has been clicked, false otherwise.'\n        'check_out_day_clicked': 'value of True or False. True if the check out day has been clicked, false otherwise.',\n        }\n [Format Ended]. The chat history can be found below.\n", source='state', type='UserMessage')]+self._chat_history)
+        model_completion = await self._model_client.create([message.content]+self._chat_history)
         print(model_completion.content)
         await self.publish_message(webnav_state_message(content=UserMessage(content=model_completion.content, source=self.id.type)), topic_id=DefaultTopicId(type="state"))
 
@@ -121,16 +132,7 @@ class state_tracker_agent(RoutedAgent):
         self._state_history: List[LLMMessage] = []
         self._model_client = model_client
         self._system_message = "You are a state tracking orchestrator agent for a web navigation assistant."
-        self._state_variables = """{
-        'location_bar_clicked': 'value of True or False. True if the location bar has been clicked and false otherwise',
-        'location_type': 'value of True or False. True if the location has been typed into the location bar and false otherwise',
-        'location_value': 'The name you typed into the location bar, otherwise NONE',
-        'pop_up_present': 'value of True or False. True if a popup is on the screen, False otherwise.',
-        'check_in_month_clicked': 'value of True or False. True if the check in month has been clicked, false otherwise.',
-        'check_in_day_clicked': 'value of True or False. True if the check in day has been clicked, false otherwise.',
-        'check_out_month_clicked': 'value of True or False. True if the check out month has been clicked, false otherwise.'
-        'check_out_day_clicked': 'value of True or False. True if the check out day has been clicked, false otherwise.',
-        }"""
+        self._state_variables = json.dumps(selected_task["state_variables"])
         self._goal_state = """{
         'location_bar_clicked': True,
         'location_type': True,
@@ -143,7 +145,7 @@ class state_tracker_agent(RoutedAgent):
         'check_out_month_clicked': True
         }"""
 
-        self._STATE_REQUEST_MESSAGE="Please use your previous tool action history and current tool action to analyze the states relating to the task. Please return nothing besides the state variables in the following format, with the type value replaced with the description replaced with the correct value or NONE if the state is not applicable yet:{\n        'location_bar_clicked': 'value of True or False. True if the location bar has been clicked and false otherwise',\n        'location_type': 'value of True or False. True if the location has been typed into the location bar and false otherwise',\n        'location_value': 'The name you typed into the location bar, otherwise NONE',\n        'pop_up_present': 'value of True or False. True if a popup is on the screen, False otherwise.',\n        'check_in_month_clicked': 'value of True or False. True if the check in month has been clicked, false otherwise.',\n        'check_in_day_clicked': 'value of True or False. True if the check in day has been clicked, false otherwise.',\n        'check_out_month_clicked': 'value of True or False. True if the check out month has been clicked, false otherwise.'\n        'check_out_day_clicked': 'value of True or False. True if the check out day has been clicked, false otherwise.',\n        }\n [Format Ended]. The chat history can be found below.\n" + self._state_variables
+        self._STATE_REQUEST_MESSAGE="Please use your previous tool action history and current tool action to analyze the states relating to the task. Please return nothing besides the state variables in the following format, with the type value replaced with the description replaced with the correct value or NONE if the state is not applicable yet:" + self._state_variables
 
     @message_handler
     async def handle_webnav_tool_message(self, message:webnav_tool_message, ctx: MessageContext) -> None:
@@ -156,7 +158,7 @@ class state_tracker_agent(RoutedAgent):
     @message_handler
     async def handle_webnav_state_message(self, message:webnav_state_message, ctx:MessageContext) -> None:
         print("State message received")
-        await self.publish_message(initial_goal_message(content=UserMessage(content="Please use the tools at your disposal and your knowledge of your previous actions to simulate completing the goal task. Do NOT use tools besides the ones given to you. The goals task is: 'Find the cheapest available hotel room for a three night stay from 1st Jan in Jakarta. The room is for 2 adults, just answer the cheapest hotel room and the price.' Please explain your thought process and select one tool function to use from the ones given to you in this prompt.", source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
+        await self.publish_message(initial_goal_message(content=UserMessage(content=selected_task["system_message"], source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
         self._state_history.append(message)
         print(self._state_history)
 
@@ -206,15 +208,19 @@ async def main():
         )
     )
 
+
     await runtime.add_subscription(TypeSubscription(topic_type="nav", agent_type=state_agent_type))
     await runtime.add_subscription(TypeSubscription(topic_type="state", agent_type=state_agent_type))
 
     runtime.start()
     session_id = str(uuid.uuid4())
+    
+   
+
     await runtime.publish_message(
         initial_goal_message(
-            content=UserMessage(content="Please use the tools at your disposal to complete the following task: 'Find the cheapest available hotel room for a three night   stay from 1st Jan in Jakarta. The room is for 2 adults, just answer the cheapest hotel room and the price.' Please explain your thought process and select one tool function to use.",
-            source="User",
+            content=UserMessage(content=selected_task["System Message"],
+            source="Orchestrator Agent",
             )
         ),
         TopicId(type="nav", source="user"),

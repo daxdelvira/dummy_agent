@@ -1,0 +1,56 @@
+[
+    {
+        "id": "Coursera--0",
+        "system_message": "You are tasked with finding a beginner-level online course about '3D printing' that lasts between 1-3 months. Once found, enroll the user using the provided name 'Dax' and email address 'dax@gatech.edu'.\n\nTo achieve this, follow these guidelines:\n- Use only the tools provided. Do not attempt actions outside the given tool functions.\n- Track your progress by considering past actions and the information available.\n- Execute one tool function per turn and use the returned information to update your understanding of task progress.\n- Ensure task completion is methodical, confirming that each required field is correctly interacted with before proceeding to the next step.",
+        "website": "https://www.coursera.org/",
+        "state_variables": {
+            "search_bar_clicked": "Boolean (True/False). True if the search bar has been clicked, False otherwise.",
+            "search_term_entered": "Boolean (True/False). True if '3D printing' has been entered in the search bar, False otherwise.",
+            "course_selected": "Boolean (True/False). True if a course has been selected, False otherwise.",
+            "course_duration_valid": "Boolean (True/False). True if the selected course duration is between 1-3 months, False otherwise.",
+            "enrollment_started": "Boolean (True/False). True if the enrollment process has started, False otherwise.",
+            "name_entered": "Boolean (True/False). True if the name 'Dax' has been entered, False otherwise.",
+            "email_entered": "Boolean (True/False). True if the email 'dax@gatech.edu' has been entered, False otherwise.",
+            "enrollment_completed": "Boolean (True/False). True if the enrollment has been successfully completed, False otherwise."
+        }
+    },
+    {
+        "id": "GitHub--0",
+        "system_message": "You are tasked with searching for an open-source project related to 'climate change data visualization' on GitHub and copying its cloning link.\n\nTo achieve this, follow these guidelines:\n- Use only the tools provided. Do not attempt actions outside the given tool functions.\n- Track your progress by considering past actions and the information available.\n- Execute one tool function per turn and use the returned information to update your understanding of task progress.\n- Ensure task completion is methodical, confirming that each required field is correctly interacted with before proceeding to the next step.",
+        "website": "https://github.com/",
+        "state_variables": {
+            "search_bar_clicked": "Boolean (True/False). True if the search bar has been clicked, False otherwise.",
+            "search_term_entered": "Boolean (True/False). True if 'climate change data visualization' has been entered in the search bar, False otherwise.",
+            "results_loaded": "Boolean (True/False). True if search results are displayed, False otherwise.",
+            "project_selected": "Boolean (True/False). True if an open-source project has been selected, False otherwise.",
+            "clone_link_copied": "Boolean (True/False). True if the repository's cloning link has been copied, False otherwise."
+        }
+    },
+    {
+        "id": "GoogleFlights--0",
+        "system_message": "You are tasked with booking a round-trip flight from Edinburgh to Manchester on December 28th, ensuring the return is on the same day.\n\nTo achieve this, follow these guidelines:\n- Use only the tools provided. Do not attempt actions outside the given tool functions.\n- Track your progress by considering past actions and the information available.\n- Execute one tool function per turn and use the returned information to update your understanding of task progress.\n- Ensure task completion is methodical, confirming that each required field is correctly interacted with before proceeding to the next step.",
+        "website": "https://www.google.com/travel/flights/",
+        "state_variables": {
+            "departure_location_entered": "Boolean (True/False). True if 'Edinburgh' has been entered as the departure location, False otherwise.",
+            "destination_location_entered": "Boolean (True/False). True if 'Manchester' has been entered as the destination, False otherwise.",
+            "departure_date_selected": "Boolean (True/False). True if December 28th has been selected as the departure date, False otherwise.",
+            "return_date_selected": "Boolean (True/False). True if December 28th has been selected as the return date, False otherwise.",
+            "flight_selected": "Boolean (True/False). True if a flight option has been selected, False otherwise.",
+            "booking_completed": "Boolean (True/False). True if the flight booking has been successfully completed, False otherwise."
+        }
+    },
+    {
+        "id": "GoogleFlights--1",
+        "system_message": "You are tasked with booking a one-way flight from Chicago to Paris today (February 20, 2025).\n\nTo achieve this, follow these guidelines:\n- Use only the tools provided. Do not attempt actions outside the given tool functions.\n- Track your progress by considering past actions and the information available.\n- Execute one tool function per turn and use the returned information to update your understanding of task progress.\n- Ensure task completion is methodical, confirming that each required field is correctly interacted with before proceeding to the next step.",
+        "website": "https://www.google.com/travel/flights/",
+        "state_variables": {
+            "departure_location_entered": "Boolean (True/False). True if 'Chicago' has been entered as the departure location, False otherwise.",
+            "destination_location_entered": "Boolean (True/False). True if 'Paris' has been entered as the destination, False otherwise.",
+            "departure_date_selected": "Boolean (True/False). True if February 20, 2025, has been selected as the departure date, False otherwise.",
+            "flight_selected": "Boolean (True/False). True if a flight option has been selected, False otherwise.",
+            "booking_completed": "Boolean (True/False). True if the flight booking has been successfully completed, False otherwise."
+        }
+    }
+]
+
+
