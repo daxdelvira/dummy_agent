@@ -10,8 +10,9 @@
             "course_duration_valid": "Boolean (True/False). True if the selected course duration is between 1-3 months, False otherwise.",
             "enrollment_started": "Boolean (True/False). True if the enrollment process has started, False otherwise.",
             "name_entered": "Boolean (True/False). True if the name 'Dax' has been entered, False otherwise.",
-            "email_entered": "Boolean (True/False). True if the email 'dax@gatech.edu' has been entered, False otherwise.",
+            "email_entered": "Boolean (True/False). True if the email 'dax@gatech.edu' has been entered, False otherwise."
         },
+        
         "goal_state_variables": {
             "search_bar_clicked": true,
             "search_term_entered": true, 
