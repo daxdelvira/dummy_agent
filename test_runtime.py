@@ -219,7 +219,7 @@ async def main():
 
     await runtime.publish_message(
         initial_goal_message(
-            content=UserMessage(content=selected_task["System Message"],
+            content=UserMessage(content=selected_task["system_message"],
             source="Orchestrator Agent",
             )
         ),
