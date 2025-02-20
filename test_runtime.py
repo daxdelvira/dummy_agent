@@ -54,7 +54,7 @@ def add_task_by_id(task_id:str):
             tasks = json.load(task_file)
 
         for task in tasks:
-            if tasks["id"] == task_id:
+            if task["id"] == task_id:
                 return task
 
 selected_task = add_task_by_id("Coursera--0")
