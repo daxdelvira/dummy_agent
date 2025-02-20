@@ -88,14 +88,14 @@ class webnav_agent(RoutedAgent):
     #Dummy scroll tool
     async def _scroll(self, distance: int) -> int:
         print(f"ActionChains(driver).scroll_by_amount(0,{distance}).perform()")
-        return f"Scrolled by {distance}, successfully found what you were looking for."
+        return f"Scrolled by {distance}, successfully found what you were looking for. Time for the next step"
 
     #Dummy type tool
     async def _type(self, field_name:str, text:str) -> int:
         print(f"input_field = driver.find_element(By.Name, {field_name})")
         print("input_field.clear()")
         print(f"input_field.send_keys({text})")
-        return f"Typed {text} into {field_name}"
+        return f"Typed {text} into {field_name} successfully, time for the next step"
 
     @message_handler
     async def handle_goal_message(self, message: initial_goal_message, ctx: MessageContext) -> None:
@@ -147,13 +147,15 @@ class state_tracker_agent(RoutedAgent):
 
 - Use your tool action history to infer which state variables have changed.
 - If a state variable has been updated, return its new value.
-- If a state variable is not applicable yet, return 'NONE'.
+- For Boolean state variables, return True or False. DO NOT RETURN A STRING.
+- For String state variables, return a string value. DO NOT RETURN A BOOLEAN.
+- If a state variable is not applicable yet, return NONE.
 
 Return only the state variables in the following JSON format, with each description replaced by its correct value:
 
 {
-    "state_variable_1": "correct_value_or_NONE",
-    "state_variable_2": "correct_value_or_NONE",
+    "state_variable_1": correct_value_or_NONE,
+    "state_variable_2": correct_value_or_NONE,
     ...
 }
 
