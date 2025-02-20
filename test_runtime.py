@@ -99,27 +99,25 @@ class webnav_agent(RoutedAgent):
 
     @message_handler
     async def handle_goal_message(self, message: initial_goal_message, ctx: MessageContext) -> None:
-        #self._chat_history.append(message.content)
-        print("Message here")
-        print(self._chat_history)
-        print("Second Message")
+        print("Handling Goal Message. . .\n")
+        print("Received:\n", message.content, "\n")
         model_completion = await self._model_client.create(self._system_message + [message.content] + self._chat_history, tools=[self._obtain_website_tool, self._click_tool, self._scroll_tool, self._type_tool],)
-        print(model_completion.content)
         assert isinstance(model_completion.content, list) and all(
             isinstance(item, FunctionCall) for item in model_completion.content
         )
         for tool_call in model_completion.content:
+            print("Executing tool call: \n", tool_call, "\n")
             tool_name = tool_call.name
             arguments = json.loads(tool_call.arguments)
             tool_result = await getattr(self, tool_name).run_json(arguments, ctx.cancellation_token)
-        print("Goal message received")
+            print("Tool result: \n", tool_result, "\n")
         self._chat_history.append(UserMessage(content=tool_result, source=self.id.type))
         await self.publish_message(webnav_tool_message(content=UserMessage(content=tool_result, source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
 
 
     @message_handler
     async def handle_state_request_message(self, message:state_request_message, ctx: MessageContext) -> None:
-        print("State request message received")
+        print("State request message received\n")
         model_completion = await self._model_client.create([message.content]+self._chat_history)
         print(model_completion.content)
         await self.publish_message(webnav_state_message(content=UserMessage(content=model_completion.content, source=self.id.type)), topic_id=DefaultTopicId(type="state"))
@@ -132,7 +130,7 @@ class state_tracker_agent(RoutedAgent):
         self._state_history: List[LLMMessage] = []
         self._model_client = model_client
         self._system_message = "You are a state tracking orchestrator agent for a web navigation assistant."
-        self._state_variables = json.dumps(selected_task["state_variables"])
+        self._state_variables = json.dumps(selected_task["state_variables"], indent=4)
         self._goal_state = """{
         'location_bar_clicked': True,
         'location_type': True,
@@ -145,22 +143,20 @@ class state_tracker_agent(RoutedAgent):
         'check_out_month_clicked': True
         }"""
 
-        self._STATE_REQUEST_MESSAGE="Please use your previous tool action history and current tool action to analyze the states relating to the task. Please return nothing besides the state variables in the following format, with the type value replaced with the description replaced with the correct value or NONE if the state is not applicable yet:" + self._state_variables
+        self._STATE_REQUEST_MESSAGE="Please use your previous tool action history and current tool action to analyze the states relating to the task. Please return nothing besides the state variables in the following format, with the description replaced with the correct value or NONE if the state is not applicable yet:" + self._state_variables
 
     @message_handler
     async def handle_webnav_tool_message(self, message:webnav_tool_message, ctx: MessageContext) -> None:
-        print("Tool message received")
+        print("Tool message received\n")
         await self.publish_message(state_request_message(content=UserMessage(content=self._STATE_REQUEST_MESSAGE, source=self.id.type)), topic_id=DefaultTopicId("state"))
-        print(state_request_message(content=UserMessage(content=self._STATE_REQUEST_MESSAGE, source=self.id.type)))
         #await self.publish_message()
         # TODO: New prompt message
 
     @message_handler
     async def handle_webnav_state_message(self, message:webnav_state_message, ctx:MessageContext) -> None:
-        print("State message received")
+        print("State message received\n")
         await self.publish_message(initial_goal_message(content=UserMessage(content=selected_task["system_message"], source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
         self._state_history.append(message)
-        print(self._state_history)
 
 async def main():
     runtime = SingleThreadedAgentRuntime()
