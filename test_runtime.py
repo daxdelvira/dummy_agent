@@ -235,9 +235,6 @@ Do not include any explanations, reasoning, or additional text—only the correc
             print("Current state: ", self._current_state)
             print("Message content: ", message.content.content)
 
-            # Only update previous state after successful parsing
-            self._prev_state = self._current_state 
-
             prev_correct = self.count_matching_pairs(self._prev_state, self._goal_state)
             current_correct = self.count_matching_pairs(self._current_state, self._goal_state)
 
@@ -274,6 +271,9 @@ Do not include any explanations, reasoning, or additional text—only the correc
             )
 
             self._state_history.append(message)
+
+            # Only update previous state after successful parsing
+            self._prev_state = self._current_state 
 
         except json.JSONDecodeError:
             print("Invalid JSON format")
