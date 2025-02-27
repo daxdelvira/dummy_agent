@@ -262,8 +262,8 @@ Do not include any explanations, reasoning, or additional text—only the correc
                     ), 
                     topic_id=DefaultTopicId(type="nav")
                 )
-
-            await self.publish_message(
+            else:
+                await self.publish_message(
                 initial_goal_message(
                     content=UserMessage(
                         content=selected_task["system_message"], 
@@ -359,8 +359,4 @@ async def main():
 
     await runtime.stop_when_idle()
 
-if __name__ == "__main__":
-    try:
-        asyncio.run(main())  # Run the async main function
-    except:
-        pass  # Silently handle sys.exit() without traceback
+asyncio.run(main())
