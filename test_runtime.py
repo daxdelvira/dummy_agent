@@ -91,7 +91,7 @@ class webnav_agent(RoutedAgent):
     #Dummy scroll tool
     async def _scroll(self, distance: int) -> int:
         print(f"ActionChains(driver).scroll_by_amount(0,{distance}).perform()")
-        return f"Scrolled by {distance}, successfully found what you were looking for. Time for the next step"
+        return f"Scrolled by {distance}, successfully found the element you were looking for. Please click to select."
 
     #Dummy type tool
     async def _type(self, field_name:str, text:str) -> int:
