@@ -214,9 +214,9 @@ Do not include any explanations, reasoning, or additional text—only the correc
     @message_handler
     async def handle_webnav_state_message(self, message:webnav_state_message, ctx:MessageContext) -> None:
         print("State message received\n")
-        try:
+        #try:
             #self._prev_state = self._current_state #Might put this at end of try sequence
-            self._current_state = json.loads(message.content)
+        self._current_state = json.loads(message.content)
             #prev_correct = self.count_matching_pairs(self._prev_state, self._goal_state)
             #current_correct = self.count_matching_pairs(self._current_state, self._goal_state)
             #if prev_correct >= current_correct:
@@ -224,9 +224,9 @@ Do not include any explanations, reasoning, or additional text—only the correc
 
             #await self.publish_message(initial_goal_message(content=UserMessage(content=selected_task["system_message"], source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
             #self._state_history.append(message)
-        except:
-            print("Invalid JSON format")
-            await self.publish_message(state_request_message(content=UserMessage(content="This was not correctly formatted JSON, please try to complete the following task again"+self._STATE_REQUEST_MESSAGE, source=self.id.type)), topic_id=DefaultTopicId("state"))
+        #except:
+            #print("Invalid JSON format")
+            #await self.publish_message(state_request_message(content=UserMessage(content="This was not correctly formatted JSON, please try to complete the following task again"+self._STATE_REQUEST_MESSAGE, source=self.id.type)), topic_id=DefaultTopicId("state"))
         
         
 
