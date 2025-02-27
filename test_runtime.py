@@ -134,7 +134,6 @@ class webnav_agent(RoutedAgent):
     async def handle_state_request_message(self, message:state_request_message, ctx: MessageContext) -> None:
         print("State request message received\n")
         model_completion = await self._model_client.create([message.content]+self._chat_history)
-        print(model_completion.content)
         await self.publish_message(webnav_state_message(content=UserMessage(content=model_completion.content, source=self.id.type)), topic_id=DefaultTopicId(type="state"))
 
     @message_handler
@@ -227,12 +226,13 @@ Do not include any explanations, reasoning, or additional text—only the correc
         # Stop if iteration count is exceeded
         if self._iter_count > 15:
             print("Too many iterations")
-            return
+            sys.exit(1)  # Terminate the program
 
         try:
             # Attempt to parse JSON
             self._current_state = json.loads(message.content.content)
-
+            print("Current state: ", self._current_state)
+            
             # Only update previous state after successful parsing
             self._prev_state = self._current_state 
 
