@@ -7,8 +7,6 @@
             "search_bar_clicked": "Boolean (true/false). true if the search bar has been clicked, false otherwise.",
             "search_term_entered": "Boolean (true/false). true if '3D printing' has been entered in the search bar, false otherwise.",
             "course_selected": "Boolean (true/false). true if a course has been selected, false otherwise.",
-            "course_duration_valid": "Boolean (true/false). true if the selected course duration is between 1-3 months, false otherwise.",
-            "enrollment_started": "Boolean (true/false). true if the enrollment process has started, false otherwise.",
             "name_entered": "Boolean (true/false). true if the name 'Dax' has been entered, false otherwise.",
             "email_entered": "Boolean (true/false). true if the email 'dax@gatech.edu' has been entered, false otherwise."
         },
@@ -17,8 +15,6 @@
             "search_bar_clicked": true,
             "search_term_entered": true, 
             "course_selected": true,  
-            "course_duration_valid": true, 
-            "enrollment_started": true, 
             "name_entered": true,  
             "email_entered": true 
         }

@@ -1,4 +1,5 @@
 import json
+import sys
 import asyncio
 import uuid
 import openai
@@ -219,31 +220,71 @@ Do not include any explanations, reasoning, or additional text—only the correc
         # TODO: New prompt message
 
     @message_handler
-    async def handle_webnav_state_message(self, message:webnav_state_message, ctx:MessageContext) -> None:
+    async def handle_webnav_state_message(self, message: webnav_state_message, ctx: MessageContext) -> None:
         print("State message received\n")
-        self._iter_count +=1
+        self._iter_count += 1
+
+        # Stop if iteration count is exceeded
+        if self._iter_count > 15:
+            print("Too many iterations")
+            return
+
         try:
-            self._prev_state = self._current_state #Might put this at end of try sequence
+            # Attempt to parse JSON
             self._current_state = json.loads(message.content.content)
+
+            # Only update previous state after successful parsing
+            self._prev_state = self._current_state 
+
             prev_correct = self.count_matching_pairs(self._prev_state, self._goal_state)
             current_correct = self.count_matching_pairs(self._current_state, self._goal_state)
+
             try:
                 if self.all_pairs_exist(self._goal_state, self._current_state):
                     print("Goal state reached")
                     return
-            except:
-                print("Exception on pair check")
-            if self._iter_count > 15:
-                print("Too many iterations")
-                return
-            if prev_correct >= current_correct:
-                await self.publish_message(rollback_message(content=UserMessage(content="Your previous action did not make any progress towards the goal. Please try again. Here is the prompt:" + selected_task["system_message"], source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
+            except Exception as e:
+                print(f"Exception on pair check: {e}")
+                sys.exit(1)  # Terminate the program
 
-            await self.publish_message(initial_goal_message(content=UserMessage(content=selected_task["system_message"], source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
+            # Request retry if no progress is made
+            if prev_correct >= current_correct:
+                await self.publish_message(
+                    rollback_message(
+                        content=UserMessage(
+                            content="Your previous action did not make any progress towards the goal. Please try again. Here is the prompt:" 
+                            + selected_task["system_message"], 
+                            source=self.id.type
+                        )
+                    ), 
+                    topic_id=DefaultTopicId(type="nav")
+                )
+
+            await self.publish_message(
+                initial_goal_message(
+                    content=UserMessage(
+                        content=selected_task["system_message"], 
+                        source=self.id.type
+                    )
+                ), 
+                topic_id=DefaultTopicId(type="nav")
+            )
+
             self._state_history.append(message)
-        except:
+
+        except json.JSONDecodeError:
             print("Invalid JSON format")
-            await self.publish_message(state_request_message(content=UserMessage(content="This was not correctly formatted JSON, please try to complete the following task again"+self._STATE_REQUEST_MESSAGE, source=self.id.type)), topic_id=DefaultTopicId("state"))
+            await self.publish_message(
+                state_request_message(
+                    content=UserMessage(
+                        content="This was not correctly formatted JSON, please try to complete the following task again" 
+                        + self._STATE_REQUEST_MESSAGE, 
+                        source=self.id.type
+                    )
+                ), 
+                topic_id=DefaultTopicId("state")
+            )
+
         
         
 
