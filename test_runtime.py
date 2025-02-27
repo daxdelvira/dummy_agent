@@ -226,7 +226,7 @@ Do not include any explanations, reasoning, or additional text—only the correc
         # Stop if iteration count is exceeded
         if self._iter_count > 15:
             print("Too many iterations")
-            sys.exit(1)  # Terminate the program
+            return  # Terminate the program
 
         try:
             # Attempt to parse JSON
