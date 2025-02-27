@@ -216,7 +216,7 @@ Do not include any explanations, reasoning, or additional text—only the correc
         print("State message received\n")
         #try:
             #self._prev_state = self._current_state #Might put this at end of try sequence
-        self._current_state = json.loads(message.content)
+        self._current_state = json.loads(message.content.content)
             #prev_correct = self.count_matching_pairs(self._prev_state, self._goal_state)
             #current_correct = self.count_matching_pairs(self._current_state, self._goal_state)
             #if prev_correct >= current_correct:
