@@ -4,13 +4,13 @@
         "system_message": "You are tasked with finding a beginner-level online course about '3D printing' that lasts between 1-3 months. Once found, enroll the user using the provided name 'Dax' and email address 'dax@gatech.edu'.\n\nTo achieve this, follow these guidelines:\n- Use only the tools provided. Do not attempt actions outside the given tool functions.\n- Track your progress by considering past actions and the information available.\n- Execute one tool function per turn and use the returned information to update your understanding of task progress.\n- Ensure task completion is methodical, confirming that each required field is correctly interacted with before proceeding to the next step.",
         "website": "https://www.coursera.org/",
         "state_variables": {
-            "search_bar_clicked": "Boolean (True/False). True if the search bar has been clicked, False otherwise.",
-            "search_term_entered": "Boolean (True/False). True if '3D printing' has been entered in the search bar, False otherwise.",
-            "course_selected": "Boolean (True/False). True if a course has been selected, False otherwise.",
-            "course_duration_valid": "Boolean (True/False). True if the selected course duration is between 1-3 months, False otherwise.",
-            "enrollment_started": "Boolean (True/False). True if the enrollment process has started, False otherwise.",
-            "name_entered": "Boolean (True/False). True if the name 'Dax' has been entered, False otherwise.",
-            "email_entered": "Boolean (True/False). True if the email 'dax@gatech.edu' has been entered, False otherwise."
+            "search_bar_clicked": "Boolean (true/false). true if the search bar has been clicked, false otherwise.",
+            "search_term_entered": "Boolean (true/false). true if '3D printing' has been entered in the search bar, false otherwise.",
+            "course_selected": "Boolean (true/false). true if a course has been selected, false otherwise.",
+            "course_duration_valid": "Boolean (true/false). true if the selected course duration is between 1-3 months, false otherwise.",
+            "enrollment_started": "Boolean (true/false). true if the enrollment process has started, false otherwise.",
+            "name_entered": "Boolean (true/false). true if the name 'Dax' has been entered, false otherwise.",
+            "email_entered": "Boolean (true/false). true if the email 'dax@gatech.edu' has been entered, false otherwise."
         },
         
         "goal_state_variables": {

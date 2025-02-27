@@ -178,14 +178,15 @@ class state_tracker_agent(RoutedAgent):
         self._goal_state = selected_task["goal_state_variables"]
         self._current_state = None
         self._prev_state = None
+        self._iter_count = 0
 
         self._STATE_REQUEST_MESSAGE="""Analyze the state variables based on your previous tool actions and the current tool action.
 
 - Use your tool action history to infer which state variables have changed.
 - If a state variable has been updated, return its new value.
-- For Boolean state variables, return True or False. DO NOT RETURN A STRING.
+- For Boolean state variables, return true or false. DO NOT RETURN A STRING.
 - For String state variables, return a string value. DO NOT RETURN A BOOLEAN.
-- If a state variable is not applicable yet, return NONE.
+- If a state variable is not applicable yet, return None.
 
 Return only the state variables in the following JSON format, with each description replaced by its correct value:
 
@@ -220,13 +221,20 @@ Do not include any explanations, reasoning, or additional text—only the correc
     @message_handler
     async def handle_webnav_state_message(self, message:webnav_state_message, ctx:MessageContext) -> None:
         print("State message received\n")
+        self._iter_count +=1
         try:
             self._prev_state = self._current_state #Might put this at end of try sequence
             self._current_state = json.loads(message.content.content)
             prev_correct = self.count_matching_pairs(self._prev_state, self._goal_state)
             current_correct = self.count_matching_pairs(self._current_state, self._goal_state)
-            if self.all_pairs_exist(self._goal_state, self._current_state):
-                print("Goal state reached")
+            try:
+                if self.all_pairs_exist(self._goal_state, self._current_state):
+                    print("Goal state reached")
+                    return
+            except:
+                print("Exception on pair check")
+            if self._iter_count > 15:
+                print("Too many iterations")
                 return
             if prev_correct >= current_correct:
                 await self.publish_message(rollback_message(content=UserMessage(content="Your previous action did not make any progress towards the goal. Please try again. Here is the prompt:" + selected_task["system_message"], source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
