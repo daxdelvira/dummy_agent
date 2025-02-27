@@ -232,7 +232,7 @@ Do not include any explanations, reasoning, or additional text—only the correc
             # Attempt to parse JSON
             self._current_state = json.loads(message.content.content)
             print("Current state: ", self._current_state)
-            
+
             # Only update previous state after successful parsing
             self._prev_state = self._current_state 
 
@@ -356,4 +356,8 @@ async def main():
 
     await runtime.stop_when_idle()
 
-asyncio.run(main())
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())  # Run the async main function
+    except SystemExit:
+        pass  # Silently handle sys.exit() without traceback
