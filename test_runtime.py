@@ -34,8 +34,10 @@ from autogen_ext.models.openai import OpenAIChatCompletionClient
 class initial_goal_message(BaseModel):
     content: UserMessage
 
-
 class state_request_message(BaseModel):
+    content: UserMessage
+
+class rollback_message(BaseModel):
     content: UserMessage
 
 # Webnav agent to orchestrator message types
@@ -134,6 +136,36 @@ class webnav_agent(RoutedAgent):
         print(model_completion.content)
         await self.publish_message(webnav_state_message(content=UserMessage(content=model_completion.content, source=self.id.type)), topic_id=DefaultTopicId(type="state"))
 
+    @message_handler
+    async def handle_rollback_message(self, message:rollback_message, ctx: MessageContext) -> None:
+        print("Rollback message received\n")
+        needRetry = True
+        while needRetry:
+            try:
+                model_completion = await self._model_client.create(self._system_message + [message.content] + self._chat_history, tools=[self._obtain_website_tool, self._click_tool, self._scroll_tool, self._type_tool],)
+                assert isinstance(model_completion.content, list) and all(
+                    isinstance(item, FunctionCall) for item in model_completion.content
+                    )
+                needRetry = False
+            except AssertionError:
+                print("Assertion error")
+                needRetry = True
+            
+
+        for tool_call in model_completion.content:
+            print("Executing tool call: \n", tool_call, "\n")
+            tool_name = tool_call.name
+            arguments = json.loads(tool_call.arguments)
+            try:
+                tool_result = await getattr(self, tool_name).run_json(arguments, ctx.cancellation_token)
+            except AttributeError:
+                tool_result = "Invalid tool name, try again."
+            print("Tool result: \n", tool_result, "\n")
+        self._chat_history.pop()
+        self._chat_history.append(UserMessage(content=tool_result, source=self.id.type))
+        await self.publish_message(webnav_tool_message(content=UserMessage(content=tool_result, source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
+
+
 # Orchestrator agent
 
 class state_tracker_agent(RoutedAgent):
@@ -143,17 +175,9 @@ class state_tracker_agent(RoutedAgent):
         self._model_client = model_client
         self._system_message = "You are a state tracking orchestrator agent for a web navigation assistant."
         self._state_variables = json.dumps(selected_task["state_variables"], indent=4)
-        self._goal_state = """{
-        'location_bar_clicked': True,
-        'location_type': True,
-        'location_value': 'Jakarta, Indonesia',
-        'pop_up_present': False,
-        'check_in_month_clicked': True,
-        'check_in_day_clicked': True,
-        'check_in_month_clicked': True,
-        'check_out_day_clicked': True,
-        'check_out_month_clicked': True
-        }"""
+        self._goal_state = selected_task["goal_state_variables"]
+        self._current_state = None
+        self._prev_state = None
 
         self._STATE_REQUEST_MESSAGE="""Analyze the state variables based on your previous tool actions and the current tool action.
 
@@ -173,6 +197,13 @@ Return only the state variables in the following JSON format, with each descript
 
 Do not include any explanations, reasoning, or additional text—only the correctly formatted JSON output.""" + self._state_variables
 
+    def count_matching_pairs(self, json1, json2):
+        """
+        Compares two JSON objects and returns the number of matching key-value pairs.
+        """
+        matches = sum(1 for key in json1 if key in json2 and json1[key] == json2[key])
+        return matches
+
     @message_handler
     async def handle_webnav_tool_message(self, message:webnav_tool_message, ctx: MessageContext) -> None:
         print("Tool message received\n")
@@ -183,8 +214,20 @@ Do not include any explanations, reasoning, or additional text—only the correc
     @message_handler
     async def handle_webnav_state_message(self, message:webnav_state_message, ctx:MessageContext) -> None:
         print("State message received\n")
-        await self.publish_message(initial_goal_message(content=UserMessage(content=selected_task["system_message"], source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
-        self._state_history.append(message)
+        try:
+            self._prev_state = self._current_state #Might put this at end of try sequence
+            self._current_state = json.loads(message.content)
+            prev_correct = self.count_matching_pairs(self._prev_state, self._goal_state)
+            current_correct = self.count_matching_pairs(self._current_state, self._goal_state)
+            if prev_correct >= current_correct:
+                await self.publish_message(rollback_message(content=UserMessage(content="Your previous action did not make any progress towards the goal. Please try again. Here is the prompt:" + selected_task["system_message"], source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
+
+            await self.publish_message(initial_goal_message(content=UserMessage(content=selected_task["system_message"], source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
+            self._state_history.append(message)
+        except:
+            print("Invalid JSON format")
+            await self.publish_message(state_request_message(content=UserMessage(content="This was not correctly formatted JSON, please try to complete the following task again"+self._STATE_REQUEST_MESSAGE, source=self.id.type)), topic_id=DefaultTopicId("state"))
+        
         
 
 async def main():
