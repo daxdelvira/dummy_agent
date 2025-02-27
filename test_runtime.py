@@ -161,7 +161,8 @@ class webnav_agent(RoutedAgent):
             except AttributeError:
                 tool_result = "Invalid tool name, try again."
             print("Tool result: \n", tool_result, "\n")
-        self._chat_history.pop()
+        rollback_toolcall = self._chat_history.pop()
+        print("Rollback tool call: \n", rollback_toolcall, "\n")
         self._chat_history.append(UserMessage(content=tool_result, source=self.id.type))
         await self.publish_message(webnav_tool_message(content=UserMessage(content=tool_result, source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
 
