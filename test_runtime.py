@@ -233,13 +233,14 @@ Do not include any explanations, reasoning, or additional text—only the correc
             print("Loading in message. . .")
             self._current_state = json.loads(message.content.content)
             print("Current state: ", self._current_state)
+            print("Previous state: ", self._prev_state)
             print("Message content: ", message.content.content)
 
             prev_correct = self.count_matching_pairs(self._prev_state, self._goal_state)
             current_correct = self.count_matching_pairs(self._current_state, self._goal_state)
 
             try:
-                if self.all_pairs_exist(self._goal_state, self._current_state):
+                if self._prev_state != None and self.all_pairs_exist(self._goal_state, self._current_state):
                     print("Goal state reached")
                     return
             except Exception as e:
