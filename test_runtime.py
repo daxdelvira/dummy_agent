@@ -219,6 +219,9 @@ Do not include any explanations, reasoning, or additional text—only the correc
             self._current_state = json.loads(message.content.content)
             prev_correct = self.count_matching_pairs(self._prev_state, self._goal_state)
             current_correct = self.count_matching_pairs(self._current_state, self._goal_state)
+            if current_correct == len(self._goal_state):
+                print("Goal state reached")
+                return
             if prev_correct >= current_correct:
                 await self.publish_message(rollback_message(content=UserMessage(content="Your previous action did not make any progress towards the goal. Please try again. Here is the prompt:" + selected_task["system_message"], source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
 
