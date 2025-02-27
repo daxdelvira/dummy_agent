@@ -236,11 +236,12 @@ Do not include any explanations, reasoning, or additional text—only the correc
             print("Previous state: ", self._prev_state)
             print("Message content: ", message.content.content)
 
-            prev_correct = self.count_matching_pairs(self._prev_state, self._goal_state)
-            current_correct = self.count_matching_pairs(self._current_state, self._goal_state)
+            if self._prev_state is not None:
+                prev_correct = self.count_matching_pairs(self._prev_state, self._goal_state)
+                current_correct = self.count_matching_pairs(self._current_state, self._goal_state)
 
             try:
-                if self._prev_state != None and self.all_pairs_exist(self._goal_state, self._current_state):
+                if self.all_pairs_exist(self._goal_state, self._current_state):
                     print("Goal state reached")
                     return
             except Exception as e:
@@ -248,7 +249,7 @@ Do not include any explanations, reasoning, or additional text—only the correc
                 sys.exit(1)  # Terminate the program
 
             # Request retry if no progress is made
-            if prev_correct >= current_correct:
+            if (self._prev_state is not None) and (prev_correct >= current_correct):
                 print("Rollback is necessary")
                 await self.publish_message(
                     rollback_message(
