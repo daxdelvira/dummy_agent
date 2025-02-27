@@ -359,5 +359,5 @@ async def main():
 if __name__ == "__main__":
     try:
         asyncio.run(main())  # Run the async main function
-    except SystemExit:
+    except:
         pass  # Silently handle sys.exit() without traceback
