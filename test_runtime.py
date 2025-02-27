@@ -230,8 +230,10 @@ Do not include any explanations, reasoning, or additional text—only the correc
 
         try:
             # Attempt to parse JSON
+            print("Loading in message. . .")
             self._current_state = json.loads(message.content.content)
             print("Current state: ", self._current_state)
+            print("Message content: ", message.content.content)
 
             # Only update previous state after successful parsing
             self._prev_state = self._current_state 
@@ -249,6 +251,7 @@ Do not include any explanations, reasoning, or additional text—only the correc
 
             # Request retry if no progress is made
             if prev_correct >= current_correct:
+                print("Rollback is necessary")
                 await self.publish_message(
                     rollback_message(
                         content=UserMessage(
