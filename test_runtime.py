@@ -204,6 +204,12 @@ Do not include any explanations, reasoning, or additional text—only the correc
         matches = sum(1 for key in json1 if key in json2 and json1[key] == json2[key])
         return matches
 
+    def all_pairs_exist(json1, json2):
+        """
+        Checks if all key-value pairs in json1 exist in json2.
+        """
+        return all(key in json2 and json1[key] == json2[key] for key in json1)
+
     @message_handler
     async def handle_webnav_tool_message(self, message:webnav_tool_message, ctx: MessageContext) -> None:
         print("Tool message received\n")
@@ -219,7 +225,7 @@ Do not include any explanations, reasoning, or additional text—only the correc
             self._current_state = json.loads(message.content.content)
             prev_correct = self.count_matching_pairs(self._prev_state, self._goal_state)
             current_correct = self.count_matching_pairs(self._current_state, self._goal_state)
-            if current_correct == len(self._goal_state):
+            if self.all_pairs_exist(self._goal_state, self._current_state):
                 print("Goal state reached")
                 return
             if prev_correct >= current_correct:
