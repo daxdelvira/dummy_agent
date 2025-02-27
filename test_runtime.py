@@ -206,7 +206,7 @@ Do not include any explanations, reasoning, or additional text—only the correc
         matches = sum(1 for key in json1 if key in json2 and json1[key] == json2[key])
         return matches
 
-    def all_pairs_exist(json1, json2):
+    def all_pairs_exist(self, json1, json2):
         """
         Checks if all key-value pairs in json1 exist in json2.
         """
