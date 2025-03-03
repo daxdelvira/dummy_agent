@@ -72,6 +72,7 @@ class webnav_agent(RoutedAgent):
         self._click_tool = FunctionTool(self._click, name="_click_tool", description="Call this to click on an element by name.")
         self._scroll_tool = FunctionTool(self._scroll, name="_scroll_tool", description="Call this to scroll and see more of the webpage.")
         self._type_tool = FunctionTool(self._type, name="_type_tool", description="Call this to type the passed string in a specified field.")
+        self._total_steps = 0
 
     #Dummy obtain website tool
     async def _obtain_website(self, web_url: str) -> int:
@@ -120,6 +121,8 @@ class webnav_agent(RoutedAgent):
             arguments = json.loads(tool_call.arguments)
             try:
                 tool_result = await getattr(self, tool_name).run_json(arguments, ctx.cancellation_token)
+                self._total_steps += 1
+                print("STEPS TAKEN SO FAR", self._total_steps)
             except AttributeError:
                 tool_result = "Invalid tool name, try again."
             print("Tool result: \n", tool_result, "\n")
@@ -143,23 +146,13 @@ class state_tracker_agent(RoutedAgent):
         self._model_client = model_client
         self._system_message = "You are a state tracking orchestrator agent for a web navigation assistant."
         self._state_variables = json.dumps(selected_task["state_variables"], indent=4)
-        self._goal_state = """{
-        'location_bar_clicked': True,
-        'location_type': True,
-        'location_value': 'Jakarta, Indonesia',
-        'pop_up_present': False,
-        'check_in_month_clicked': True,
-        'check_in_day_clicked': True,
-        'check_in_month_clicked': True,
-        'check_out_day_clicked': True,
-        'check_out_month_clicked': True
-        }"""
+        self._goal_state = json.dumps(selected_task["goal_state_variables"], indent=4)
 
         self._STATE_REQUEST_MESSAGE="""Analyze the state variables based on your previous tool actions and the current tool action.
 
 - Use your tool action history to infer which state variables have changed.
 - If a state variable has been updated, return its new value.
-- For Boolean state variables, return True or False. DO NOT RETURN A STRING.
+- For Boolean state variables, return True or False. DO NOT RETURN A STRING.)
 - For String state variables, return a string value. DO NOT RETURN A BOOLEAN.
 - If a state variable is not applicable yet, return NONE.
 
@@ -183,7 +176,7 @@ Do not include any explanations, reasoning, or additional text—only the correc
     @message_handler
     async def handle_webnav_state_message(self, message:webnav_state_message, ctx:MessageContext) -> None:
         print("State message received\n")
-        await self.publish_message(initial_goal_message(content=UserMessage(content=selected_task["system_message"], source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
+        await self.publish_message(initial_goal_message(content=UserMessage(content=selected_task["system_message"] + "Your eventual goal state, once all appropriate actions are taken, should be the following: " + self._goal_state + "Please make a tool call given your chat history:", source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
         self._state_history.append(message)
         
 
