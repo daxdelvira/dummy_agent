@@ -75,6 +75,7 @@ class webnav_agent(RoutedAgent):
         self._click_tool = FunctionTool(self._click, name="_click_tool", description="Call this to click on an element by name.")
         self._scroll_tool = FunctionTool(self._scroll, name="_scroll_tool", description="Call this to scroll and see more of the webpage.")
         self._type_tool = FunctionTool(self._type, name="_type_tool", description="Call this to type the passed string in a specified field.")
+        self._tool_call_count = 0
 
     #Dummy obtain website tool
     async def _obtain_website(self, web_url: str) -> int:
@@ -123,6 +124,8 @@ class webnav_agent(RoutedAgent):
             arguments = json.loads(tool_call.arguments)
             try:
                 tool_result = await getattr(self, tool_name).run_json(arguments, ctx.cancellation_token)
+                self._tool_call_count += 1
+                print("Tool call iteration: ", self._tool_call_count)
             except AttributeError:
                 tool_result = "Invalid tool name, try again."
             print("Tool result: \n", tool_result, "\n")
