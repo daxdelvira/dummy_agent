@@ -233,7 +233,7 @@ Do not include any explanations, reasoning, or additional text—only the correc
                 topic_id=DefaultTopicId("state") 
             ) 
 
-        await self.publish_message(initial_goal_message(content=UserMessage(content=selected_task["system_message"] + "Your eventual goal state, once all appropriate actions are taken, should be the following: " + self._goal_state + "Please make a tool call given your chat history:", source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
+        await self.publish_message(initial_goal_message(content=UserMessage(content=selected_task["system_message"], source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
         self._state_history.append(message)
         
 
