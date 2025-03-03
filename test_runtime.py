@@ -199,7 +199,7 @@ Do not include any explanations, reasoning, or additional text—only the correc
         self._iter_count += 1
 
         # Stop if iteration count is exceeded
-        if self._iter_count > 25:
+        if self._iter_count > 35:
             print("Too many iterations:", self._iter_count)
             return  # Terminate the program
 
