@@ -147,7 +147,8 @@ class state_tracker_agent(RoutedAgent):
         self._system_message = "You are a state tracking orchestrator agent for a web navigation assistant."
         self._state_variables = json.dumps(selected_task["state_variables"], indent=4)
         self._goal_state = json.dumps(selected_task["goal_state_variables"], indent=4)
-
+        self._current_state = None
+        self._prev_state = None
         self._STATE_REQUEST_MESSAGE="""Analyze the state variables based on your previous tool actions and the current tool action.
 
 - Use your tool action history to infer which state variables have changed.
@@ -213,6 +214,9 @@ Do not include any explanations, reasoning, or additional text—only the correc
             except Exception as e:
                 print(f"Exception on pair check: {e}")
 
+            #Only update previous state after successful parsing
+            self._prev_state = self._current_state 
+            
         except json.JSONDecodeError: 
             print("Invalid JSON format") 
             await self.publish_message(
