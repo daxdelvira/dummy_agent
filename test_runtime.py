@@ -149,6 +149,7 @@ class state_tracker_agent(RoutedAgent):
         self._goal_state = json.dumps(selected_task["goal_state_variables"], indent=4)
         self._current_state = None
         self._prev_state = None
+        self._iter_count = 0
         self._STATE_REQUEST_MESSAGE="""Analyze the state variables based on your previous tool actions and the current tool action.
 
 - Use your tool action history to infer which state variables have changed.
@@ -194,6 +195,13 @@ Do not include any explanations, reasoning, or additional text—only the correc
     @message_handler
     async def handle_webnav_state_message(self, message:webnav_state_message, ctx:MessageContext) -> None:
         print("State message received\n")
+
+        self._iter_count += 1
+
+        # Stop if iteration count is exceeded
+        if self._iter_count > 25:
+            print("Too many iterations")
+            return  # Terminate the program
 
         try:
             # Attempt to parse JSON
