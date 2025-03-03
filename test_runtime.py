@@ -176,6 +176,26 @@ Do not include any explanations, reasoning, or additional text—only the correc
     @message_handler
     async def handle_webnav_state_message(self, message:webnav_state_message, ctx:MessageContext) -> None:
         print("State message received\n")
+
+        try:
+            # Attempt to parse JSON
+            print("Loading in message. . .")
+            self._current_state = json.loads(message.content.content)
+            print("Current state: ", self._current_state)
+            print("Previous state: ", self._prev_state)
+            print("Message content: ", message.content.content)
+
+            if self._prev_state is not None:
+                prev_correct = self.count_matching_pairs(self._prev_state, self._goal_state)
+                current_correct = self.count_matching_pairs(self._current_state, self._goal_state)
+
+            try:
+                if self.all_pairs_exist(self._goal_state, self._current_state):
+                    print("Goal state reached")
+                    return
+            except Exception as e:
+                print(f"Exception on pair check: {e}")
+
         await self.publish_message(initial_goal_message(content=UserMessage(content=selected_task["system_message"] + "Your eventual goal state, once all appropriate actions are taken, should be the following: " + self._goal_state + "Please make a tool call given your chat history:", source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
         self._state_history.append(message)
         
