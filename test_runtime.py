@@ -165,6 +165,23 @@ Return only the state variables in the following JSON format, with each descript
 }
 
 Do not include any explanations, reasoning, or additional text—only the correctly formatted JSON output.""" + self._state_variables
+   
+    def count_matching_pairs(self, json1, json2): 
+        """ 
+        Compares two JSON objects and returns the number of matching key-value pairs. 
+        """ 
+        matches = sum(1 for key in json1 if key in json2 and json1[key] == json2[key]) 
+
+        return matches 
+
+ 
+
+    def all_pairs_exist(self, json1, json2): 
+        """ 
+        Checks if all key-value pairs in json1 exist in json2. 
+        """ 
+
+        return all(key in json2 and json1[key] == json2[key] for key in json1)
 
     @message_handler
     async def handle_webnav_tool_message(self, message:webnav_tool_message, ctx: MessageContext) -> None:
@@ -195,6 +212,18 @@ Do not include any explanations, reasoning, or additional text—only the correc
                     return
             except Exception as e:
                 print(f"Exception on pair check: {e}")
+
+        except json.JSONDecodeError: 
+            print("Invalid JSON format") 
+            await self.publish_message(
+                state_request_message(
+                    content=UserMessage(
+                        content="This was not correctly formatted JSON, please try to complete the following task again" + self._STATE_REQUEST_MESSAGE, 
+                        source=self.id.type
+                        ) 
+                ),
+                topic_id=DefaultTopicId("state") 
+            ) 
 
         await self.publish_message(initial_goal_message(content=UserMessage(content=selected_task["system_message"] + "Your eventual goal state, once all appropriate actions are taken, should be the following: " + self._goal_state + "Please make a tool call given your chat history:", source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
         self._state_history.append(message)
