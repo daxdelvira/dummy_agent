@@ -38,7 +38,10 @@ class initial_goal_message(BaseModel):
 class state_request_message(BaseModel):
     content: UserMessage
 
-class rollback_message(BaseModel):
+class state_correction_message(BaseModel):
+    content: UserMessage
+
+class retry_message(BaseModel):
     content: UserMessage
 
 # Webnav agent to orchestrator message types
@@ -76,6 +79,7 @@ class webnav_agent(RoutedAgent):
         self._scroll_tool = FunctionTool(self._scroll, name="_scroll_tool", description="Call this to scroll and see more of the webpage.")
         self._type_tool = FunctionTool(self._type, name="_type_tool", description="Call this to type the passed string in a specified field.")
         self._tool_call_count = 0
+        self._state_history: List[LLMMessage] = []
 
     #Dummy obtain website tool
     async def _obtain_website(self, web_url: str) -> int:
@@ -140,8 +144,9 @@ class webnav_agent(RoutedAgent):
         await self.publish_message(webnav_state_message(content=UserMessage(content=model_completion.content, source=self.id.type)), topic_id=DefaultTopicId(type="state"))
 
     @message_handler
-    async def handle_rollback_message(self, message:rollback_message, ctx: MessageContext) -> None:
-        print("Rollback message received\n")
+    async def handle_retry_message(self, message:retry_message, ctx: MessageContext) -> None:
+        print("Retry message received\n")
+        self._chat_history.append(message.content)
         needRetry = True
         while needRetry:
             try:
@@ -166,11 +171,15 @@ class webnav_agent(RoutedAgent):
             except AttributeError:
                 tool_result = "Invalid tool name, try again."
             print("Tool result: \n", tool_result, "\n")
-        rollback_toolcall = self._chat_history.pop()
-        print("Rollback tool call: \n", rollback_toolcall, "\n")
+        
         self._chat_history.append(UserMessage(content=tool_result, source=self.id.type))
         await self.publish_message(webnav_tool_message(content=UserMessage(content=tool_result, source=self.id.type)), topic_id=DefaultTopicId(type="nav"))
 
+    @message_handler
+    async def handle_state_correction_message(self, message:state_correction_message, ctx: MessageContext) -> None:
+        print("State correction message received\n")
+        old_state = self._state_history.pop()
+        self._state_history.append(message.content)
 
 # Orchestrator agent
 
@@ -184,6 +193,7 @@ class state_tracker_agent(RoutedAgent):
         self._goal_state = selected_task["goal_state_variables"]
         self._current_state = None
         self._prev_state = None
+        self._last_tool_call = None
         self._iter_count = 0
 
         self._STATE_REQUEST_MESSAGE="""Analyze the state variables based on your previous tool actions and the current tool action.
@@ -220,6 +230,7 @@ Do not include any explanations, reasoning, or additional text—only the correc
     @message_handler
     async def handle_webnav_tool_message(self, message:webnav_tool_message, ctx: MessageContext) -> None:
         print("Tool message received\n")
+        self._last_tool_call = message.content.content
         await self.publish_message(state_request_message(content=UserMessage(content=self._STATE_REQUEST_MESSAGE, source=self.id.type)), topic_id=DefaultTopicId("state"))
         #await self.publish_message()
         # TODO: New prompt message
@@ -238,51 +249,47 @@ Do not include any explanations, reasoning, or additional text—only the correc
             # Attempt to parse JSON
             print("Loading in message. . .")
             self._current_state = json.loads(message.content.content)
-            print("Current state: ", self._current_state)
+            
             print("Previous state: ", self._prev_state)
+            print("Current state: ", self._current_state)
+            print("Last Tool Call Made:", self._last_tool_call)
             print("Message content: ", message.content.content)
 
-            if self._prev_state is not None:
-                prev_correct = self.count_matching_pairs(self._prev_state, self._goal_state)
-                current_correct = self.count_matching_pairs(self._current_state, self._goal_state)
-
-            try:
-                if self.all_pairs_exist(self._goal_state, self._current_state):
-                    print("Goal state reached")
-                    return
-            except Exception as e:
-                print(f"Exception on pair check: {e}")
-                sys.exit(1)  # Terminate the program
-
-            # Request retry if no progress is made
-            if (self._prev_state is not None) and (prev_correct >= current_correct):
-                print("Rollback is necessary")
+            approval = input("Is the state correct? (y/n): ")
+            if approval == "y":
                 await self.publish_message(
-                    rollback_message(
+                    initial_goal_message(
                         content=UserMessage(
-                            content="Your previous action did not make any progress towards the goal. Please try again. Here is the prompt:" 
-                            + selected_task["system_message"], 
+                            content="The state has been updated successfully. Please select the next tool action to take.",
                             source=self.id.type
                         )
-                    ), 
-                    topic_id=DefaultTopicId(type="nav")
+                    ),
+                    topic_id=DefaultTopicId("nav")
                 )
             else:
-                await self.publish_message(
-                initial_goal_message(
-                    content=UserMessage(
-                        content=selected_task["system_message"], 
-                        source=self.id.type
+                mistake = input("What was the mistake? (action/state): ")
+                if mistake == "action":
+                    correct_state = input("What should the state be? (JSON format): ")
+                    await self.publish_message(
+                        retry_message(
+                            content=UserMessage(
+                                content="This is not the correct tool call, please run a tool call so the state becomes this:" + correct_state,
+                                source=self.id.type
+                            )
+                        ),
+                        topic_id=DefaultTopicId("retry")
                     )
-                ), 
-                topic_id=DefaultTopicId(type="nav")
-            )
-
-            self._state_history.append(message)
-
-            # Only update previous state after successful parsing
-            self._prev_state = self._current_state 
-
+                elif mistake == "state":
+                    correct_state = input("What should the state be? (JSON format): ")
+                    await self.publish_message(
+                        state_correction_message(
+                            content=UserMessage(
+                                content=correct_state,
+                                source=self.id.type
+                            )
+                        ),
+                        topic_id=DefaultTopicId("state_correction")
+                    )
         except json.JSONDecodeError:
             print("Invalid JSON format")
             await self.publish_message(
@@ -304,6 +311,8 @@ async def main():
 
     state_tracking_topic_type = "state"
     web_navigation_topic_type = "nav"
+    retry_topic_type = "retry"
+    state_correction_topic_type = "state_correction"
 
     web_agent_type = await webnav_agent.register(
         runtime,
@@ -326,6 +335,8 @@ async def main():
 
     await runtime.add_subscription(TypeSubscription(topic_type="nav", agent_type=web_agent_type))
     await runtime.add_subscription(TypeSubscription(topic_type="state", agent_type=web_agent_type))
+    await runtime.add_subscription(TypeSubscription(topic_type="retry", agent_type=web_agent_type))
+    await runtime.add_subscription(TypeSubscription(topic_type="state_correction", agent_type=web_agent_type))
 
     state_agent_type = await state_tracker_agent.register(
         runtime,
@@ -348,6 +359,8 @@ async def main():
 
     await runtime.add_subscription(TypeSubscription(topic_type="nav", agent_type=state_agent_type))
     await runtime.add_subscription(TypeSubscription(topic_type="state", agent_type=state_agent_type))
+    await runtime.add_subscription(TypeSubscription(topic_type="retry", agent_type=state_agent_type))
+    await runtime.add_subscription(TypeSubscription(topic_type="state_correction", agent_type=state_agent_type))
 
     runtime.start()
     session_id = str(uuid.uuid4())
