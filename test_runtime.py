@@ -161,6 +161,8 @@ class webnav_agent(RoutedAgent):
             arguments = json.loads(tool_call.arguments)
             try:
                 tool_result = await getattr(self, tool_name).run_json(arguments, ctx.cancellation_token)
+                self._tool_call_count += 1
+                print("Tool call iteration: ", self._tool_call_count)
             except AttributeError:
                 tool_result = "Invalid tool name, try again."
             print("Tool result: \n", tool_result, "\n")
