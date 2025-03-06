@@ -81,6 +81,7 @@ class webnav_agent(RoutedAgent):
         self._type_tool = FunctionTool(self._type, name="_type_tool", description="Call this to type the passed string in a specified field.")
         self._tool_call_count = 0
         self._state_history: List[LLMMessage] = []
+        self._prev_state: List[LLMMessage] = []
 
     #Dummy obtain website tool
     async def _obtain_website(self, web_url: str) -> int:
@@ -113,8 +114,7 @@ class webnav_agent(RoutedAgent):
         needRetry = True
         while needRetry:
             try:
-                model_completion = await self._model_client.create([message.content] + self._chat_history + [SystemMessage(content="The following is your current state: ")] + [self._state_history[-1] if self._state_history else None]
-, tools=[self._obtain_website_tool, self._click_tool, self._scroll_tool, self._type_tool],)
+                model_completion = await self._model_client.create([message.content] + self._chat_history + [SystemMessage(content="The following is your current state: ")] + self._prev_state, tools=[self._obtain_website_tool, self._click_tool, self._scroll_tool, self._type_tool],)
                 assert isinstance(model_completion.content, list) and all(
                     isinstance(item, FunctionCall) for item in model_completion.content
                     )
@@ -144,6 +144,8 @@ class webnav_agent(RoutedAgent):
         print("State request message received\n")
         model_completion = await self._model_client.create([message.content]+self._chat_history)
         self._state_history.append(UserMessage(content=model_completion.content, source=self.id.type))
+        self._prev_state.pop()
+        self._prev_state.append(UserMessage(content=model_completion.content, source=self.id.type))
         await self.publish_message(webnav_state_message(content=UserMessage(content=model_completion.content, source=self.id.type)), topic_id=DefaultTopicId(type="state"))
 
     @message_handler
@@ -183,6 +185,8 @@ class webnav_agent(RoutedAgent):
         print("State correction message received\n")
         old_state = self._state_history.pop()
         self._state_history.append(message.content)
+        self._prev_state.pop()
+        self._prev_state.append(message.content)
 
 # Orchestrator agent
 
