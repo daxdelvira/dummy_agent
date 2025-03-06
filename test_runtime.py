@@ -1,3 +1,4 @@
+import csv
 import json
 import sys
 import asyncio
@@ -184,7 +185,7 @@ class webnav_agent(RoutedAgent):
 # Orchestrator agent
 
 class state_tracker_agent(RoutedAgent):
-    def __init__(self, model_client: ChatCompletionClient) -> None:
+    def __init__(self, model_client: ChatCompletionClient, intervention_interval: int) -> None:
         super().__init__("state_tracker_agent")
         self._state_history: List[LLMMessage] = []
         self._model_client = model_client
@@ -194,6 +195,7 @@ class state_tracker_agent(RoutedAgent):
         self._current_state = None
         self._prev_state = None
         self._last_tool_call = None
+        self._intervention_interval = intervention_interval
         self._iter_count = 0
 
         self._STATE_REQUEST_MESSAGE="""Analyze the state variables based on your previous tool actions and the current tool action.
@@ -304,80 +306,113 @@ Do not include any explanations, reasoning, or additional text—only the correc
             )
 
         
-        
+#Agent instances to store graphs
+agent_instances = {}        
 
 async def main():
-    runtime = SingleThreadedAgentRuntime()
+    iter_counts = []
+    intervention_interval = int(input("What's the intervention interval?"))
 
-    state_tracking_topic_type = "state"
-    web_navigation_topic_type = "nav"
-    retry_topic_type = "retry"
-    state_correction_topic_type = "state_correction"
+    for run in range(10):
+        runtime = SingleThreadedAgentRuntime()
 
-    web_agent_type = await webnav_agent.register(
-        runtime,
-        "nav",
-        lambda: webnav_agent(
-            model_client=OpenAIChatCompletionClient(
-                model="meta-llama/Llama-3.1-8B-Instruct",
-                base_url="http://localhost:8000/v1/",
-                api_key="EMPTY",
-                model_info={
-                    "vision": False,
-                    "function_calling": True,
-                    "json_output": True,
-                    "family": "unknown",
-                },
-            ),
-        nav_topic_type="nav",
-        )
-    )
+        state_tracking_topic_type = "state"
+        web_navigation_topic_type = "nav"
+        retry_topic_type = "retry"
+        state_correction_topic_type = "state_correction"
 
-    await runtime.add_subscription(TypeSubscription(topic_type="nav", agent_type=web_agent_type))
-    await runtime.add_subscription(TypeSubscription(topic_type="state", agent_type=web_agent_type))
-    await runtime.add_subscription(TypeSubscription(topic_type="retry", agent_type=web_agent_type))
-    await runtime.add_subscription(TypeSubscription(topic_type="state_correction", agent_type=web_agent_type))
-
-    state_agent_type = await state_tracker_agent.register(
-        runtime,
-        "state",
-        lambda: state_tracker_agent(
-            model_client=OpenAIChatCompletionClient(
-                model="meta-llama/Llama-3.1-8b-Instruct",
-                base_url="http://localhost:8000/v1/",
-                api_key="placeholder",
-                model_info={
-                    "vision": False,
-                    "function_calling": True,
-                    "json_output": True,
-                    "family": "unknown",
-                },
+        web_agent_type = await webnav_agent.register(
+            runtime,
+            "nav",
+            lambda: webnav_agent(
+                model_client=OpenAIChatCompletionClient(
+                    model="meta-llama/Llama-3.1-8B-Instruct",
+                    base_url="http://localhost:8000/v1/",
+                    api_key="EMPTY",
+                    model_info={
+                        "vision": False,
+                        "function_calling": True,
+                        "json_output": True,
+                        "family": "unknown",
+                    },
+                ),
+            nav_topic_type="nav",
             )
         )
-    )
+
+        await runtime.add_subscription(TypeSubscription(topic_type="nav", agent_type=web_agent_type))
+        await runtime.add_subscription(TypeSubscription(topic_type="state", agent_type=web_agent_type))
+        await runtime.add_subscription(TypeSubscription(topic_type="retry", agent_type=web_agent_type))
+        await runtime.add_subscription(TypeSubscription(topic_type="state_correction", agent_type=web_agent_type))
+
+        #register state tracker agent in global agent_instances
+        async def state_agent_factory():
+            agent_instance = state_tracker_agent(
+                model_client=OpenAIChatCompletionClient(
+                    model="meta-llama/Llama-3.1-8b-Instruct",
+                    base_url="http://localhost:8000/v1/",
+                    api_key="placeholder",
+                    model_info={
+                        "vision": False,
+                        "function_calling": True,
+                        "json_output": True,
+                        "family": "unknown",
+                    },
+                ),
+                intervention_interval=intervention_interval,
+            )
+            agent_instances["state_tracker_agent"] = agent_instance
+            return agent_instance
+
+        #Stick the factory function in the register function
+        state_agent_type = await state_tracker_agent.register(
+            runtime,
+            "state",
+            state_agent_factory
+        )
 
 
-    await runtime.add_subscription(TypeSubscription(topic_type="nav", agent_type=state_agent_type))
-    await runtime.add_subscription(TypeSubscription(topic_type="state", agent_type=state_agent_type))
-    await runtime.add_subscription(TypeSubscription(topic_type="retry", agent_type=state_agent_type))
-    await runtime.add_subscription(TypeSubscription(topic_type="state_correction", agent_type=state_agent_type))
+        await runtime.add_subscription(TypeSubscription(topic_type="nav", agent_type=state_agent_type))
+        await runtime.add_subscription(TypeSubscription(topic_type="state", agent_type=state_agent_type))
+        await runtime.add_subscription(TypeSubscription(topic_type="retry", agent_type=state_agent_type))
+        await runtime.add_subscription(TypeSubscription(topic_type="state_correction", agent_type=state_agent_type))
 
-    runtime.start()
-    session_id = str(uuid.uuid4())
+        runtime.start()
+        session_id = str(uuid.uuid4())
     
-    goal_state = json.dumps(selected_task["goal_state_variables"], indent=4)
+        goal_state = json.dumps(selected_task["goal_state_variables"], indent=4)
    
-    await runtime.publish_message(
-        initial_goal_message(
-            content=UserMessage(content=selected_task["system_message"] + "Remember the eventual goal state we want to reach is represented as follows:" + goal_state,
-            source="orchestrator_agent",
-            )
-        ),
-        TopicId(type="nav", source="user"),
-    )
+        await runtime.publish_message(
+            initial_goal_message(
+                content=UserMessage(content=selected_task["system_message"] + "Remember the eventual goal state we want to reach is represented as follows:" + goal_state,
+                source="orchestrator_agent",
+                )
+            ),
+            TopicId(type="nav", source="user"),
+        )
 
-    print("Message published")
+        print("Message published")
 
-    await runtime.stop_when_idle()
+        await runtime.stop_when_idle()
+    
+        state_agent = agent_instances["state_tracker_agent"]
+        iter_counts.append(state_agent._iter_count)
+
+        #Clean up for next run
+        del agent_instances["state_tracker_agent"]
+        runtime = None
+        await asyncio.sleep(2)
+
+    csv_file = "iteration_count_results.csv"
+    with open(csv_file, mode="w",newline="") as file:
+        writer = csv.writer(file)
+         # Check if the file is empty to write the header first
+        file.seek(0)  # Move to the start of the file
+        if not file.read(1):  # If file is empty, write the header
+            writer.writerow(["Experiment Type"] + [f"Run{i}" for i in range(1, 11)])
+        
+        experiment_name = input("Write the experiment name:")
+        writer.writerow([experiment_name] + iter_counts)
+
 
 asyncio.run(main())
