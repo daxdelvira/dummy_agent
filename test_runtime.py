@@ -265,6 +265,13 @@ Do not include any explanations, reasoning, or additional text—only the correc
             print("Last Tool Call Made:", self._last_tool_call)
             print("Message content: ", message.content.content)
 
+            try:
+                if self.all_pairs_exist(self._goal_state, self._current_state):
+                    print("Goal state reached")
+                    return
+            except Exception as e:
+                print(f"Exception on pair check: {e}")
+
             if self._iter_count % self._intervention_interval == 0:
                 approval = input("Is the state correct? (y/n): ")
                 if approval == "y":
