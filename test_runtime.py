@@ -264,7 +264,7 @@ Do not include any explanations, reasoning, or additional text—only the correc
                     await self.publish_message(
                         initial_goal_message(
                             content=UserMessage(
-                                content="The state has been updated successfully. Please select the next tool action to take.",
+                                content="Please select the next tool action for the task. As a reminder, the tast is: " + selected_task["system_message"],
                                 source=self.id.type
                             )
                         ),
