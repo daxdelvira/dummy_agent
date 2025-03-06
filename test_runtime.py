@@ -72,7 +72,7 @@ class webnav_agent(RoutedAgent):
     def __init__(self, model_client: ChatCompletionClient, nav_topic_type: str) -> None:
         super().__init__("A web navigator agent with tools")
         self._nav_topic_type = nav_topic_type
-        self._system_message: List[LLMMessage] = [SystemMessage(content="You are a helpful web navigation assistant. When the state tracking agent publishes a task, please use any past actions you've taken and the tools available to you, please outline your thought process and select the next tool action to take to get closer to the goal. Only select one tool action.")]
+        self._system_message: List[LLMMessage] = [SystemMessage(content="You are a helpful web navigation assistant. When the state tracking agent publishes a task, please use any past actions you've taken, your state history, and the tools available to you, please outline your thought process and select the next tool action to take to get closer to the goal. Only select one tool action.")]
         self._model_client = model_client
         self._chat_history: List[LLMMessage] = []
         self._obtain_website_tool = FunctionTool(self._obtain_website, name="_obtain_website_tool", description="Call this to navigate to a website via url.")
@@ -113,7 +113,7 @@ class webnav_agent(RoutedAgent):
         needRetry = True
         while needRetry:
             try:
-                model_completion = await self._model_client.create(self._system_message + [message.content] + self._chat_history, tools=[self._obtain_website_tool, self._click_tool, self._scroll_tool, self._type_tool],)
+                model_completion = await self._model_client.create(self._system_message + [message.content] + self._chat_history + self._state_history, tools=[self._obtain_website_tool, self._click_tool, self._scroll_tool, self._type_tool],)
                 assert isinstance(model_completion.content, list) and all(
                     isinstance(item, FunctionCall) for item in model_completion.content
                     )
@@ -142,6 +142,7 @@ class webnav_agent(RoutedAgent):
     async def handle_state_request_message(self, message:state_request_message, ctx: MessageContext) -> None:
         print("State request message received\n")
         model_completion = await self._model_client.create([message.content]+self._chat_history)
+        self._state_history.append(webnav_state_message(content=UserMessage(content=model_completion.content, source=self.id.type)), topic_id=DefaultTopicId(type="state"))
         await self.publish_message(webnav_state_message(content=UserMessage(content=model_completion.content, source=self.id.type)), topic_id=DefaultTopicId(type="state"))
 
     @message_handler
