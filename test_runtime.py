@@ -318,7 +318,17 @@ Do not include any explanations, reasoning, or additional text—only the correc
                         ),
                         topic_id=DefaultTopicId("nav")
                     )
-
+            else:
+                await self.publish_message(
+                        initial_goal_message(
+                            content=UserMessage(
+                                content="Please select the next tool action for the task. As a reminder, the task is: " + selected_task["system_message"],
+                                source=self.id.type
+                            )
+                        ),
+                        topic_id=DefaultTopicId("nav")
+                    )
+                
         except json.JSONDecodeError:
             print("Invalid JSON format")
             await self.publish_message(
