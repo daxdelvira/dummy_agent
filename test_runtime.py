@@ -142,7 +142,7 @@ class webnav_agent(RoutedAgent):
     async def handle_state_request_message(self, message:state_request_message, ctx: MessageContext) -> None:
         print("State request message received\n")
         model_completion = await self._model_client.create([message.content]+self._chat_history)
-        self._state_history.append(webnav_state_message(content=UserMessage(content=model_completion.content, source=self.id.type)), topic_id=DefaultTopicId(type="state"))
+        self._state_history.append(UserMessage(content=model_completion.content, source=self.id.type))
         await self.publish_message(webnav_state_message(content=UserMessage(content=model_completion.content, source=self.id.type)), topic_id=DefaultTopicId(type="state"))
 
     @message_handler
