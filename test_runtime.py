@@ -293,7 +293,7 @@ Do not include any explanations, reasoning, or additional text—only the correc
                             ),
                             topic_id=DefaultTopicId("state_correction")
                         )
-                        
+
         except json.JSONDecodeError:
             print("Invalid JSON format")
             await self.publish_message(
@@ -406,7 +406,7 @@ async def main():
         await asyncio.sleep(2)
 
     csv_file = "iteration_count_results.csv"
-    with open(csv_file, mode="w",newline="") as file:
+    with open(csv_file, mode="a+",newline="") as file:
         writer = csv.writer(file)
          # Check if the file is empty to write the header first
         file.seek(0)  # Move to the start of the file
