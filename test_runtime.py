@@ -269,7 +269,7 @@ Do not include any explanations, reasoning, or additional text—only the correc
                     await self.publish_message(
                         initial_goal_message(
                             content=UserMessage(
-                                content="Please select the next tool action for the task. As a reminder, the tast is: " + selected_task["system_message"],
+                                content="Please select the next tool action for the task. As a reminder, the tast is: " + selected_task["system_message"] + "Your previous actions can be found here: ",
                                 source=self.id.type
                             )
                         ),
