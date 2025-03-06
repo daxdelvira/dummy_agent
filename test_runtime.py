@@ -166,16 +166,17 @@ class webnav_agent(RoutedAgent):
                 needRetry = True
             
 
-        for tool_call in model_completion.content:
-            print("Executing tool call: \n", tool_call, "\n")
-            tool_name = tool_call.name
-            arguments = json.loads(tool_call.arguments)
-            try:
-                tool_result = await getattr(self, tool_name).run_json(arguments, ctx.cancellation_token)
-                self._tool_call_count += 1
-                print("Tool call iteration: ", self._tool_call_count)
-            except AttributeError:
-                tool_result = "Invalid tool name, try again."
+            for tool_call in model_completion.content:
+                print("Executing tool call: \n", tool_call, "\n")
+                tool_name = tool_call.name
+                arguments = json.loads(tool_call.arguments)
+                try:
+                    tool_result = await getattr(self, tool_name).run_json(arguments, ctx.cancellation_token)
+                    self._tool_call_count += 1
+                    print("Tool call iteration: ", self._tool_call_count)
+                except AttributeError:
+                    tool_result = "Invalid tool name, try again."
+                    needRetry = True
             print("Tool result: \n", tool_result, "\n")
         
         self._chat_history.append(UserMessage(content=tool_result, source=self.id.type))
@@ -269,7 +270,7 @@ Do not include any explanations, reasoning, or additional text—only the correc
                     await self.publish_message(
                         initial_goal_message(
                             content=UserMessage(
-                                content="Please select the next tool action for the task. As a reminder, the tast is: " + selected_task["system_message"] + "Your previous actions can be found here: ",
+                                content="Please select the next tool action for the task. As a reminder, the task is: " + selected_task["system_message"] + "Your previous actions are: ",
                                 source=self.id.type
                             )
                         ),
@@ -300,11 +301,11 @@ Do not include any explanations, reasoning, or additional text—only the correc
                             ),
                             topic_id=DefaultTopicId("state_correction")
                         )
-                        await asyncio.sleep(2)
+                        
                         await self.publish_message(
                         initial_goal_message(
                             content=UserMessage(
-                                content="Please select the next tool action for the task. As a reminder, the tast is: " + selected_task["system_message"],
+                                content="Please select the next tool action for the task. As a reminder, the task is: " + selected_task["system_message"],
                                 source=self.id.type
                             )
                         ),
