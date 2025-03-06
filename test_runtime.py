@@ -257,41 +257,43 @@ Do not include any explanations, reasoning, or additional text—only the correc
             print("Last Tool Call Made:", self._last_tool_call)
             print("Message content: ", message.content.content)
 
-            approval = input("Is the state correct? (y/n): ")
-            if approval == "y":
-                await self.publish_message(
-                    initial_goal_message(
-                        content=UserMessage(
-                            content="The state has been updated successfully. Please select the next tool action to take.",
-                            source=self.id.type
+            if self._iter_count % self._intervention_interval == 0:
+                approval = input("Is the state correct? (y/n): ")
+                if approval == "y":
+                    await self.publish_message(
+                        initial_goal_message(
+                            content=UserMessage(
+                                content="The state has been updated successfully. Please select the next tool action to take.",
+                                source=self.id.type
+                            )
+                        ),
+                        topic_id=DefaultTopicId("nav")
+                    )
+                else:
+                    mistake = input("What was the mistake? (action/state): ")
+                    if mistake == "action":
+                        correct_state = input("What should the state be? (JSON format): ")
+                        await self.publish_message(
+                            retry_message(
+                                content=UserMessage(
+                                    content="This is not the correct tool call, please run a tool call so the state becomes this:" + correct_state,
+                                    source=self.id.type
+                                )
+                            ),
+                            topic_id=DefaultTopicId("retry")
                         )
-                    ),
-                    topic_id=DefaultTopicId("nav")
-                )
-            else:
-                mistake = input("What was the mistake? (action/state): ")
-                if mistake == "action":
-                    correct_state = input("What should the state be? (JSON format): ")
-                    await self.publish_message(
-                        retry_message(
-                            content=UserMessage(
-                                content="This is not the correct tool call, please run a tool call so the state becomes this:" + correct_state,
-                                source=self.id.type
-                            )
-                        ),
-                        topic_id=DefaultTopicId("retry")
-                    )
-                elif mistake == "state":
-                    correct_state = input("What should the state be? (JSON format): ")
-                    await self.publish_message(
-                        state_correction_message(
-                            content=UserMessage(
-                                content=correct_state,
-                                source=self.id.type
-                            )
-                        ),
-                        topic_id=DefaultTopicId("state_correction")
-                    )
+                    elif mistake == "state":
+                        correct_state = input("What should the state be? (JSON format): ")
+                        await self.publish_message(
+                            state_correction_message(
+                                content=UserMessage(
+                                    content=correct_state,
+                                    source=self.id.type
+                                )
+                            ),
+                            topic_id=DefaultTopicId("state_correction")
+                        )
+                        
         except json.JSONDecodeError:
             print("Invalid JSON format")
             await self.publish_message(
