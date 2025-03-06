@@ -285,6 +285,10 @@ Do not include any explanations, reasoning, or additional text—only the correc
                         topic_id=DefaultTopicId("nav")
                     )
                 else:
+                    complete = input("Is the task complete?")
+                    if complete == "y":
+                        print("Goal state reached")
+                        return
                     mistake = input("What was the mistake? (action/state): ")
                     if mistake == "action":
                         correct_state = input("What should the state be? (JSON format): ")
