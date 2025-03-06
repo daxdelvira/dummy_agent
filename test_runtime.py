@@ -250,11 +250,6 @@ Do not include any explanations, reasoning, or additional text—only the correc
         print("State message received\n")
         self._iter_count += 1
 
-        # Stop if iteration count is exceeded
-        if self._iter_count > 25:
-            print("Too many iterations")
-            return  # Terminate the program
-
         try:
             # Attempt to parse JSON
             print("Loading in message. . .")
