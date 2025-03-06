@@ -119,8 +119,8 @@ class webnav_agent(RoutedAgent):
                     isinstance(item, FunctionCall) for item in model_completion.content
                     )
                 needRetry = False
-            except AssertionError:
-                print("Assertion error")
+            except AssertionError as e:
+                print("Assertion error", e)
                 needRetry = True
             
 
