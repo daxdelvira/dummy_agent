@@ -147,7 +147,7 @@ class state_tracker_agent(RoutedAgent):
         self._model_client = model_client
         self._system_message = "You are a state tracking orchestrator agent for a web navigation assistant."
         self._state_variables = json.dumps(selected_task["state_variables"], indent=4)
-        self._goal_state = json.dumps(selected_task["goal_state_variables"], indent=4)
+        self._goal_state = selected_task["goal_state_variables"]
         self._current_state = None
         self._prev_state = None
         self._iter_count = 0
@@ -326,7 +326,7 @@ async def main():
         await asyncio.sleep(2)
 
     csv_file = "iteration_count_results.csv"
-    with open(csv_file, mode="w",newline="") as file:
+    with open(csv_file, mode="r+",newline="") as file:
         writer = csv.writer(file)
          # Check if the file is empty to write the header first
         file.seek(0)  # Move to the start of the file
