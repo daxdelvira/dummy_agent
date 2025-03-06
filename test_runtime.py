@@ -113,7 +113,8 @@ class webnav_agent(RoutedAgent):
         needRetry = True
         while needRetry:
             try:
-                model_completion = await self._model_client.create([message.content] + self._chat_history + [SystemMessage(content="The following is your current state: ")] + [self._state_history[-1]], tools=[self._obtain_website_tool, self._click_tool, self._scroll_tool, self._type_tool],)
+                model_completion = await self._model_client.create([message.content] + self._chat_history + [SystemMessage(content="The following is your current state: ")] + [self._state_history[-1] if self._state_history else None]
+, tools=[self._obtain_website_tool, self._click_tool, self._scroll_tool, self._type_tool],)
                 assert isinstance(model_completion.content, list) and all(
                     isinstance(item, FunctionCall) for item in model_completion.content
                     )
