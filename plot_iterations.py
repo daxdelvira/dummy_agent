@@ -25,6 +25,12 @@ plt.title("Average Run Length with Standard Deviation")
 plt.xticks(rotation=45, ha="right")  # Rotate x-axis labels for readability
 plt.grid(axis="y", linestyle="--", alpha=0.7)
 
-# Show the plot
+
+# Save the plot as a PNG in the current directory
 plt.tight_layout()
-plt.show()
+plt.savefig("average_run_length.png", dpi=300, bbox_inches="tight")
+
+# Close the plot to free memory
+plt.close()
+
+print("Plot saved as 'average_run_length.png' in the current directory.")
