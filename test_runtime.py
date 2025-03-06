@@ -409,7 +409,7 @@ async def main():
          # Check if the file is empty to write the header first
         file.seek(0)  # Move to the start of the file
         if not file.read(1):  # If file is empty, write the header
-            writer.writerow(["Experiment Type"] + [f"Run{i}" for i in range(1, 11)])
+            writer.writerow(["experiment_type"] + [f"Run{i}" for i in range(1, 11)])
         
         experiment_name = input("Write the experiment name:")
         writer.writerow([experiment_name] + iter_counts)

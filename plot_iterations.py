@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Load the CSV file
-csv_file = "experiment_results.csv"  # Change this to your file path
+csv_file = "iteration_count_results.csv" # Change this to your file path
 df = pd.read_csv(csv_file)
 
 # Extract the experiment types and run data
